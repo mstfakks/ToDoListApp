@@ -12,9 +12,15 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+// mongoose.connect(
+//   "mongodb+srv://mstfakks:M.581441.a@cluster0.dr31itw.mongodb.net/todolistDB"
+// );
+
 mongoose.connect(
-  "mongodb+srv://mstfakks:M.581441.a@cluster0.dr31itw.mongodb.net/todolistDB"
+  "mongodb+srv://mstfakks:M.581441.a@cluster0.dr31itw.mongodb.net/todolistDB?retryWrites=true&w=majority"
 );
+
+// mongoose.connect("mongodb://127.0.0.1:27017/todolistDB");
 
 const itemsSchema = {
   name: String,
@@ -66,8 +72,12 @@ app.get("/:customListName", (req, res) => {
         name: customListName,
         items: defaultItems,
       });
-      list.save();
-      res.redirect("/" + customListName);
+      list
+        .save()
+        .then(() => {
+          res.redirect("/" + customListName);
+        })
+        .catch((err) => console.log(err));
     } else {
       res.render("list", {
         listTitle: foundList.name,
@@ -105,13 +115,21 @@ app.post("/", function (req, res) {
     name: itemName,
   });
   if (listName === "Today") {
-    item.save();
-    res.redirect("/");
+    item
+      .save()
+      .then(() => {
+        res.redirect("/");
+      })
+      .catch((err) => console.log(err));
   } else {
     List.findOne({ name: listName }).then((foundList) => {
       foundList.items.push(item);
-      foundList.save();
-      res.redirect("/" + listName);
+      foundList
+        .save()
+        .then(() => {
+          res.redirect("/" + listName);
+        })
+        .catch((err) => console.log(err));
     });
   }
 });
@@ -123,20 +141,3 @@ app.get("/about", function (req, res) {
 app.listen(3000, function () {
   console.log("Server started on port 3000");
 });
-
-/*
-Deploying Apps with Databases
--> Bu adımda bir db ile çalışan uygulamayı deploy etmeyi öğreneceğiz.
--> Şu anda uygulamamıza localhost:3000 üzerinden erişebiliyoruz. Uygulama 
-sunucu olarak bilgisayarımızı kullanıyor bilgisayarımız node a dayanıyor.
--> Web uygulamamızın kendisini heroku gibi bir platforma deploy edebiliriz.
--> Veritabanımızı da ayrı bir sunucu içerisinde açmalıyız. MongoDB için 
-MongoDB Atlas kullanacağız.
--> Db mizi dağıtmak için MongoDB Atlas'a kayıt oluyoruz.
--> Databases kısmında connect butonuna tıklıyoruz. Burada mongosh
-kullandığımız için I have MongoDB shell seçeneğini işaretliyoruz.
--> Daha sonra bize verdiği connection stringi terminalimize kopyalıyoruz.
--> connection stringten sonra istediği şifreyi giriyoruz.
--> Uygulamamızı buraya bağlamak için connect your application diyip
-oradan gelen url i uygulamada connection kısmına yapıştırıyoruz.
-*/
